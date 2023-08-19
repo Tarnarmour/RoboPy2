@@ -17,7 +17,7 @@ Date:
     Last Updated: August 19 2023
 
 Version:
-    0.0.1
+    0.1.0
 
 Dependencies:
     - numpy
