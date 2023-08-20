@@ -75,7 +75,7 @@ class SerialArm:
             raise ValueError("Invalid 'tool' argument, must be 4 x 4 homogeneous transform")
 
     @lru_cache(maxsize=16)
-    def _fk(self, q: tuple[Number],
+    def _fk(self, q: tuple[float],
             index: tuple[int, int],
             base: bool,
             tool: bool) -> NDArray:
@@ -99,7 +99,7 @@ class SerialArm:
         
         return T
 
-    def fk(self, q: Sequence[Number],
+    def fk(self, q: Sequence[float],
           index: Union[Sequence[int], int] = None,
           base: bool = False,
           tool: bool = False,
@@ -115,9 +115,14 @@ class SerialArm:
                 raise ValueError(f"Invalid index {index} to fk function!")
             index = (0, index)
         else:
+            index = tuple(index)
             if index[1] < index[0]:
                 raise ValueError(f"Invalid index {index} to fk function!")
 
         T = self._fk(tuple(q), index, base, tool)
 
         return transforms.T2rep(T, rep)
+
+    @lru_cache(maxsize=16)
+    def _jac(self, q: tuple[float], index: tuple[int, int], base: bool, tool: bool) -> NDArray:
+        pass

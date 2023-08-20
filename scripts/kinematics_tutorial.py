@@ -1,10 +1,10 @@
-""" Getting started tutorial """
+""" Kinematics module tutorial """
 
 """ First, import robopy2 and numpy """
 import robopy2 as rp
 import numpy as np
 
-""" Make transforms print more nicely """
+""" We'll be printing a lot of 4x4 transforms. This function sets some nice default numpy printing options """
 rp.nice_printoptions()
 
 """ Now, we can define a robot arm using DH parameters or a list of 4x4 transforms or a combination of both.
@@ -29,7 +29,7 @@ print(T)
 """ We can also choose to optionally define and include transforms from the world frame to the base, or from
 the end of the arm out to a tool frame:"""
 base = rp.transl([1.0, 0.0, 1.0])  # translation of [1, 0, 1]
-tool = rp.trotx(np.pi / 2)  # rotation about x axis of 90 degrees
+tool = rp.trotx(np.pi / 2)  # rotation about x-axis of 90 degrees
 arm = rp.SerialArm(dh, jt, base=base, tool=tool)
 T = arm.fk(q, base=True, tool=True)
 print(T)

@@ -1,16 +1,19 @@
-# RoboPy2
+# robopy2
 Second release of the RoboPy library
 
 ## Dependencies
 
 ### Runtime dependencies
-- numpy 1.25.2
+- numpy >= 1.20.0
 
 ### development dependencies
-- pytest 7.4.0
+- pytest == 7.4.0
 
 ## Installation
-Just install it instantly and everywhere
+robopy2 is available on PyPI and can be installed using
+```bash
+pip install robopy2
+```
 
 ## Getting Started
-Make an arm and have fun
+See the robopy2/scripts folder for tutorials
