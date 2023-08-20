@@ -1,6 +1,7 @@
 ## RoboPy2 specific ignore stuff
 sandbox/*
 sandbox
+.pypirc
 
 ## Generic Python ignore stuff
 # Byte-compiled / optimized / DLL files
