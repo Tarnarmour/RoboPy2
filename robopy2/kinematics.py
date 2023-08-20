@@ -117,7 +117,7 @@ class SerialArm:
             index = (0, index)
         else:
             index = tuple(index)
-            if index[1] < index[0]:
+            if index[1] < index[0] or index[1] > self.n or index[0] < 0:
                 raise ValueError(f"Invalid index {index} to fk function!")
 
         T = self._fk(tuple(q), index, base, tool)
@@ -125,5 +125,59 @@ class SerialArm:
         return transforms.T2rep(T, rep)
 
     @lru_cache(maxsize=16)
-    def _jac(self, q: tuple[float], index: tuple[int, int], base: bool, tool: bool) -> NDArray:
-        pass
+    def _jacob(self, q: tuple[float],
+             index: tuple[int, int],
+             base: bool, tool: bool) -> NDArray:
+
+        Te = self._fk(q, index, base, tool)
+        pe = Te[0:3, 3]
+        J = np.zeros((6, index[1] - index[0]))
+
+        for i in range(index[0], index[1]):
+            Ti = self._fk(q, (index[0], i), base, tool)
+            zaxis = Ti[0:3, 2]
+            if self.jt[i] == 'r':
+                p = pe - Ti[0:3, 3]
+                J[0:3, i - index[0]] = np.cross(zaxis, p)
+                J[3:6, i - index[0]] = zaxis
+            elif self.jt[i] == 'p':
+                J[0:3, i - index[0]] = zaxis
+            else:
+                pass
+
+        return J
+
+    def jacob(self, q: Sequence[float],
+              index: Union[tuple[int, int], int] = None,
+              base: bool = False,
+              tool: bool = False,
+              rep: str = 'full'):
+
+        q = tuple(q)
+
+        if index is None:
+            index = (0, self.n)
+        elif isinstance(index, int):
+            if index < 0 or index > self.n:
+                raise ValueError(f"Invalid index {index} to jacob function!")
+            index = (0, index)
+        else:
+            index = tuple(index)
+            if index[1] < index[0] or index[1] > self.n or index[0] < 0:
+                raise ValueError(f"Invalid index {index} to jacob function!")
+
+        J = self._jacob(q, index, base, tool)
+
+        return SerialArm.J2rep(J, rep)
+
+    @staticmethod
+    def J2rep(J: NDArray, rep: str):
+        rep = rep.lower()
+        if rep in ('full', 'se3', ''):
+            return J
+        elif rep in ('cart', 'xyz'):
+            return J[0:3]
+        elif rep in ('planar', 'xyth'):
+            return J[[0, 1, 5]]
+        else:
+            raise ValueError(f"Invalid string for rep type: {rep}")

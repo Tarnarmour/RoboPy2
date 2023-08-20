@@ -167,26 +167,6 @@ def test_T2rep_cartesian_case():
         xyz, T2rep(T, 'xyz')
     )))
 
-    assert (np.all(np.isclose(
-        xyz, T2rep(T, 'pos')
-    )))
-
-    assert (np.all(np.isclose(
-        xyz, T2rep(T, 'cartesian')
-    )))
-
-    assert (np.all(np.isclose(
-        xyz, T2rep(T, 'position')
-    )))
-
-    assert (np.all(np.isclose(
-        xyz, T2rep(T, 'location')
-    )))
-
-    assert (np.all(np.isclose(
-        xyz, T2rep(T, 'loc')
-    )))
-
 
 def test_T2rep_planar_case():
     th = np.pi / 4
@@ -203,10 +183,6 @@ def test_T2rep_planar_case():
 
     assert(np.all(np.isclose(
         xyth, T2rep(T, 'planar')
-    )))
-
-    assert (np.all(np.isclose(
-        xyth, T2rep(T, 'plane')
     )))
 
     assert (np.all(np.isclose(

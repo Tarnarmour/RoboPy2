@@ -101,9 +101,9 @@ def T2rep(T: np.ndarray, rep: str) -> np.ndarray:
     rep = rep.lower()
     if rep in ('se3', 'full', ''):
         return T
-    elif rep in ('cart', 'xyz', 'pos', 'cartesian', 'position', 'location', 'loc'):
+    elif rep in ('cart', 'xyz'):
         return T[0:3, 3]
-    elif rep in ('planar', 'plane', 'xyth'):
+    elif rep in ('planar', 'xyth'):
         theta = np.arctan2(T[1, 0], T[0, 0])
         return np.array([T[0, 3], T[1, 3], theta])
     else:
