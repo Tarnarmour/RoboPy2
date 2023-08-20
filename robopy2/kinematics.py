@@ -22,11 +22,11 @@ from . import transforms
 class SerialArm:
     def __init__(self, geometry: Sequence[Any],
                  jt: Sequence[str] = None,
-                 qlimits: Sequence[tuple[Number]] = None,
+                 qlimits: Sequence[Sequence[Any]] = None,
                  base: NDArray = transforms.EYE4,
                  tool: NDArray = transforms.EYE4):
         """
-        SerialArm contructor function
+        SerialArm constructor function
         :param geometry: Sequence[Any] defining the geometry of the arm. geometry[i] should either give the dh parameters (using [d, theta, a, alpha] order) or a 4x4 numpy array representing the transform from joint i to i + 1
         :param jt: Sequence[str] = ('r', ... 'r') joint types, 'r' for revolute 'p' for prismatic e.g. ['r', 'p', 'r']
         :param qlimits: Sequence[tuple[Number]] = ((-2 * pi, 2 * pi) ... (-2 * pi, 2 * pi)) joint angle limits in [(low, high), (low, high)] format, ex. [(-pi, pi), (-pi/2, pi)]
@@ -60,8 +60,9 @@ class SerialArm:
             if len(qlimits) != self.n:
                 raise ValueError("'qlimits' not the same length as number of joints!")
             for i, qlimit in enumerate(qlimits):
-                if qlimit[0] >= 0 or qlimit[1] <= 0:
-                    raise ValueError(f"qlimit at index {i} has improper value (lower bound must be <= 0, upper bound must be >= 0")
+                if qlimit[0] >= 0.0 or qlimit[1] <= 0.0:
+                    raise ValueError(
+                        f"qlimit at index {i} has improper value (lower bound must be <= 0, upper bound must be >= 0")
             self.qlimits = qlimits
 
         if isinstance(base, np.ndarray) and base.shape == (4, 4):
@@ -84,7 +85,7 @@ class SerialArm:
             T = self.base
         else:
             T = transforms.EYE4
-        
+
         for i in range(index[0], index[1]):
             if self.jt[i] == 'r':
                 T = T @ transforms.trotz(q[i])
@@ -93,17 +94,17 @@ class SerialArm:
             else:
                 pass
             T = T @ self.geometry[i]
-        
+
         if index[1] == self.n and tool:
             T = T @ self.tool
-        
+
         return T
 
     def fk(self, q: Sequence[float],
-          index: Union[Sequence[int], int] = None,
-          base: bool = False,
-          tool: bool = False,
-          rep: str = 'se3') -> np.ndarray:
+           index: Union[Sequence[int], int] = None,
+           base: bool = False,
+           tool: bool = False,
+           rep: str = 'se3') -> np.ndarray:
 
         if len(q) != self.n:
             raise ValueError("Incorrect number of joint angles for fk function!")

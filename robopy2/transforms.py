@@ -6,6 +6,8 @@ Example:
     T = transl([1, 2, 3])
     q = rpy2quat([pi, pi/2, 0])
 """
+from typing import Sequence
+from numbers import Number
 
 import numpy as np
 
@@ -86,11 +88,13 @@ def translz(z):
                      [0.0, 0.0, 0.0, 1.0]], dtype=float)
 
 
-def se3(R=EYE3, p=np.array([0, 0, 0], dtype=float)):
-    T = np.copy(EYE4)
-    T[0:3, 0:3] = R
-    T[0:3, 3] = p
-    return T
+def se3(R: np.ndarray, p: Sequence[Number]):
+    return np.array(
+        [[R[0, 0], R[0, 1], R[0, 2], p[0]],
+         [R[1, 0], R[1, 1], R[1, 2], p[1]],
+         [R[2, 0], R[2, 1], R[2, 2], p[2]],
+         [0.0, 0.0, 0.0, 1.0]], dtype=float
+    )
 
 
 def T2rep(T: np.ndarray, rep: str) -> np.ndarray:
@@ -99,6 +103,20 @@ def T2rep(T: np.ndarray, rep: str) -> np.ndarray:
         return T
     elif rep in ('cart', 'xyz', 'pos', 'cartesian', 'position', 'location', 'loc'):
         return T[0:3, 3]
+    elif rep in ('planar', 'plane', 'xyth'):
+        theta = np.arctan2(T[1, 0], T[0, 0])
+        return np.array([T[0, 3], T[1, 3], theta])
     else:
         raise ValueError(f"Invalid string for rep type: {rep}")
 
+
+def inv(A: np.ndarray):
+    if A.shape == (3, 3):
+        return A.T
+    elif A.shape == (4, 4):
+        R = A[0:3, 0:3]
+        p = A[0:3, 3]
+        T = np.eye(4)
+        T[0:3, 0:3] = R.T
+        T[0:3, 3] = -R.T @ p
+        return T
