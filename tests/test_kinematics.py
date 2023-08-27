@@ -14,7 +14,7 @@ def test_SerialArm_constructor_length_exception():
 
     with pytest.raises(ValueError) as exception_out:
         SerialArm(dh, ['r', 'r'])
-    assert(str(exception_out.value) == "'jt' not the same length as number of joints!")
+    assert (str(exception_out.value) == "'jt' not the same length as number of joints!")
 
     try:
         SerialArm(dh, ['r', 'r', 'p'])
@@ -23,7 +23,7 @@ def test_SerialArm_constructor_length_exception():
 
     with pytest.raises(ValueError) as exception_out:
         SerialArm(dh, qlimits=[(-1, 1)])
-    assert(str(exception_out.value) == "'qlimits' not the same length as number of joints!")
+    assert (str(exception_out.value) == "'qlimits' not the same length as number of joints!")
 
     try:
         SerialArm(dh, qlimits=((-1, 1), (-1, 1), (-1, 1)))
@@ -36,7 +36,9 @@ def test_SerialArm_constructor_qlimits_exception():
 
     with pytest.raises(ValueError) as exception_out:
         SerialArm(dh, qlimits=((1, -1),))
-    assert str(exception_out.value) == "qlimit at index 0 has improper value (lower bound must be <= 0, upper bound must be >= 0"
+    assert str(
+        exception_out.value) == "qlimit at index 0 has improper value (lower bound must be <= 0, upper bound must be " \
+                                ">= 0 "
 
 
 def test_SerialArm_constructor_base_and_tool_exception():
@@ -58,3 +60,4 @@ def test_SerialArm_constructor_base_and_tool_exception():
         SerialArm(dh, tool=np.eye(3))
     assert str(exception_out.value) == "Invalid 'tool' argument, must be 4 x 4 homogeneous transform"
 
+# TODO(john) tests for fk and jacob functions. Include some sort of performance test

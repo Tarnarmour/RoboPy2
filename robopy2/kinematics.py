@@ -12,7 +12,8 @@ Example:
 from typing import Iterable, Any, Sized, Sequence, Union
 from numbers import Number
 from numpy.typing import NDArray
-from functools import lru_cache
+from functools import lru_cache, wraps
+import numba
 
 import numpy as np
 
@@ -75,28 +76,68 @@ class SerialArm:
         else:
             raise ValueError("Invalid 'tool' argument, must be 4 x 4 homogeneous transform")
 
-    @lru_cache(maxsize=16)
-    def _fk(self, q: tuple[float],
+        self._fk_atom = lru_cache(maxsize=self.n)(self._fk_atom_raw)
+        self._fk = lru_cache(maxsize=min(10 * self.n, self.n ** 2))(self._fk_raw)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['_fk_atom']
+        del state['_fk']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        # reset cache sizes
+        self._fk_atom = lru_cache(maxsize=self.n)(self._fk_atom_raw)
+        self._fk = lru_cache(maxsize=min(10 * self.n, self.n ** 2))(self._fk_raw)
+
+    @staticmethod
+    def _fk(func):
+        """
+        Defined in __init__ as the lru_cache wrapped version of self._fk_raw
+        """
+        wraps(func)
+        @lru_cache()
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+
+    # @lru_cache(None)
+    def _fk_raw(self, q: tuple[float],
             index: tuple[int, int],
             base: bool,
             tool: bool) -> NDArray:
 
-        if index[0] == 0 and base:
-            T = self.base
+        T = transforms.EYE4
+        for i in range(index[0], index[1]):
+            T = T @ self._fk_atom(q[i], i)
+
+        if base and index[0] == 0:
+            T = self.base @ T
+        elif tool and index[1] == self.n:
+            T = T @ self.tool
+
+        return T
+
+    @staticmethod
+    def _fk_atom(func):
+        """
+        Defined in __init__ as the lru_cache wrapped version of self._fk_atom_raw
+        """
+        wraps(func)
+        @lru_cache()
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+
+    # @lru_cache(None)
+    def _fk_atom_raw(self, q: float, index: int):
+        if self.jt[index] == 'r':
+            T = transforms.trotz(q) @ self.geometry[index]
+        elif self.jt[index] == 'p':
+            T = transforms.translz(q) @ self.geometry[index]
         else:
             T = transforms.EYE4
-
-        for i in range(index[0], index[1]):
-            if self.jt[i] == 'r':
-                T = T @ transforms.trotz(q[i])
-            elif self.jt[i] == 'p':
-                T = T @ transforms.translz(q[i])
-            else:
-                pass
-            T = T @ self.geometry[i]
-
-        if index[1] == self.n and tool:
-            T = T @ self.tool
 
         return T
 
@@ -124,10 +165,10 @@ class SerialArm:
 
         return transforms.T2rep(T, rep)
 
-    @lru_cache(maxsize=16)
+    # @lru_cache(maxsize=16)
     def _jacob(self, q: tuple[float],
-             index: tuple[int, int],
-             base: bool, tool: bool) -> NDArray:
+               index: tuple[int, int],
+               base: bool, tool: bool) -> NDArray:
 
         Te = self._fk(q, index, base, tool)
         pe = Te[0:3, 3]

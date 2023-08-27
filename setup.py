@@ -12,7 +12,7 @@ setup(
     url='https://github.com/Tarnarmour/RoboPy2',
     packages=find_packages(),
     install_requires=[
-        'numpy>=1.25.0'
+        'numpy>=1.24.4'
     ],
     extras_require={
         'dev': ['pytest']
