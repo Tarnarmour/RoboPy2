@@ -24,6 +24,7 @@ class SerialArm:
     def __init__(self, geometry: Sequence[Any],
                  jt: Sequence[str] = None,
                  qlimits: Sequence[Sequence[Any]] = None,
+                 limit_type: str = 'ignore',
                  base: NDArray = transforms.EYE4,
                  tool: NDArray = transforms.EYE4):
         """
@@ -31,6 +32,7 @@ class SerialArm:
         :param geometry: Sequence[Any] defining the geometry of the arm. geometry[i] should either give the dh parameters (using [d, theta, a, alpha] order) or a 4x4 numpy array representing the transform from joint i to i + 1
         :param jt: Sequence[str] = ('r', ... 'r') joint types, 'r' for revolute 'p' for prismatic e.g. ['r', 'p', 'r']
         :param qlimits: Sequence[tuple[Number]] = ((-2 * pi, 2 * pi) ... (-2 * pi, 2 * pi)) joint angle limits in [(low, high), (low, high)] format, ex. [(-pi, pi), (-pi/2, pi)]
+        :param limit_type: str = 'ignore', string for how to treat joint limits. 'ignore', 'clamp', 'exception', 'warn'
         :param base: ndarray[4, 4] = np.eye(4) transform from world frame to joint 1 frame
         :param tool: ndarray[4, 4] = np.eye(4) transform from joint n frame to tool frame
         """
@@ -66,6 +68,11 @@ class SerialArm:
                         f"qlimit at index {i} has improper value (lower bound must be <= 0, upper bound must be >= 0")
             self.qlimits = qlimits
 
+        if limit_type in ('ignore', 'clamp', 'exception', 'warn'):
+            self.limit_type = limit_type
+        else:
+            raise ValueError(f"Unknown 'limit_type' argument: {limit_type}")
+
         if isinstance(base, np.ndarray) and base.shape == (4, 4):
             self.base = base
         else:
@@ -90,6 +97,23 @@ class SerialArm:
         # reset cache sizes
         self._fk_atom = lru_cache(maxsize=self.n)(self._fk_atom_raw)
         self._fk = lru_cache(maxsize=min(10 * self.n, self.n ** 2))(self._fk_raw)
+
+    def check_qlimit(self, q: tuple[float]) -> tuple[float]:
+        if self.limit_type == 'ignore':
+            return q
+        if self.limit_type == 'clamp':
+            return tuple([np.clip(x, lim[0], lim[1]) for x, lim in zip(q, self.qlimits)])
+        if self.limit_type == 'exception':
+            for x, lim in zip(q, self.qlimits):
+                if not lim[0] <= x <= lim[1]:
+                    raise ValueError(f'q out of joint limits: {q}')
+            return q
+        if self.limit_type == 'warn':
+            for i, x, lim in enumerate(zip(q, self.qlimits)):
+                if not lim[0] <= x <= lim[1]:
+                    print(f"Warning: q out of joint limits at index {i}: {q[i]}")
+            return q
+
 
     @staticmethod
     def _fk(func):
@@ -161,11 +185,13 @@ class SerialArm:
             if index[1] < index[0] or index[1] > self.n or index[0] < 0:
                 raise ValueError(f"Invalid index {index} to fk function!")
 
-        T = self._fk(tuple(q), index, base, tool)
+        q = self.check_qlimit(tuple(q))
+
+        T = self._fk(q, index, base, tool)
 
         return transforms.T2rep(T, rep)
 
-    # @lru_cache(maxsize=16)
+    @lru_cache(maxsize=16)
     def _jacob(self, q: tuple[float],
                index: tuple[int, int],
                base: bool, tool: bool) -> NDArray:
@@ -222,3 +248,5 @@ class SerialArm:
             return J[[0, 1, 5]]
         else:
             raise ValueError(f"Invalid string for rep type: {rep}")
+
+    def ik(self):
