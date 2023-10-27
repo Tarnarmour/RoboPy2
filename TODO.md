@@ -11,4 +11,10 @@
 - [ ] Control
 - [ ] Trajectory generation
 - [ ] Path planning
-- 
+- [ ] Automatic check for if an arm is planar
+- [ ] Naive / not so naive reach tests
+- [ ] Parse URDF
+- [ ] Write to URDF
+- [ ] Self collision checking
+- [ ] General collision checking
+- [ ] Define some custom types? Like tupled arrays and other unwieldy things

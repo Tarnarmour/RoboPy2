@@ -1,6 +1,7 @@
 # Immediately importable functions:
 from .kinematics import SerialArm
 from .transforms import *
+from .visualizations import *
 
 # Package level functions
 def nice_printoptions():

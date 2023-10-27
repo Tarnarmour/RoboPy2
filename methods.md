@@ -22,3 +22,25 @@ I think I'll make the default joint limit be infinite and the default behavior b
 ### Inverse Kinematics
 
 There's a challenge in making a single relatively simple ik function handle that can deal with many types of ik calls without needing excessive kwargs.
+While I liked the challenge of exploring multiple IK methods used in RoboPy, I think in robopy2 I'm going to focus on getting just one really good method for each target type that the user could supply, at least for now.
+IK types are therefore determined by the ways the user can represent target poses.
+The cases to be considered are as follows:
+1. XY
+2. XYZ
+3. XY-theta
+4. Full Pose
+5. Partially-unconstrained solving (e.g., solve for y but leave x and theta free, solve for x axis but leave y/z axes free)
+
+Hmm, maybe I can write just one method that works for number (5) and have it apply to all other cases.
+Then the user could also enter a target-mask, like a list [False False True False False True] that would indicate they wanted to solve for only z and z-axis pose, and any data-type could be given as a target
+
+Just like with fk and jacob, there will be an ik and a _ik function, where ik parses and standardizes the user arguments to figure out what is really being solved for.
+Then _ik can be cached (just like _fk is cached) and deal with a single argument pattern.
+
+I could do a weighted pseudo-inverse and weight all masked DOF's to zero.
+But that might be very inefficient for highly masked cases (like 2D movement).
+
+## Visualization
+
+### Architecture
+

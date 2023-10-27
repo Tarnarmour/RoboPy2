@@ -29,7 +29,7 @@ def rotx(th: float):
 def roty(th: float):
     return np.array(
         [[np.cos(th), 0.0, np.sin(th)],
-         [0.0, 1.0, -np.sin(th)],
+         [0.0, 1.0, 0.0],
          [-np.sin(th), 0.0, np.cos(th)]], dtype=float
     )
 
@@ -120,3 +120,13 @@ def inv(A: np.ndarray):
         T[0:3, 0:3] = R.T
         T[0:3, 3] = -R.T @ p
         return T
+
+def R2w(R: np.ndarray):
+    a = 0.5 * (R[0, 0] + R[1, 1] + R[2, 2] - 1)
+    theta = np.arccos(a)
+    if np.isclose(np.sin(theta)):
+        return np.array([0.0, 0.0, 0.0])
+    w = np.array([R[2, 1] - R[1, 2],
+                  R[0, 2] - R[2, 0],
+                  R[1, 0] - R[0, 1]]) / (2 * np.sin(theta))
+    return w
